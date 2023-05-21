@@ -1,0 +1,9 @@
+README.md
+setup.py
+pokeinfo/__init__.py
+pokeinfo/functions.py
+pokeinfo/test.py
+pokeinfo.egg-info/PKG-INFO
+pokeinfo.egg-info/SOURCES.txt
+pokeinfo.egg-info/dependency_links.txt
+pokeinfo.egg-info/top_level.txt
