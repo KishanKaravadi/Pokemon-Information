@@ -14,8 +14,10 @@ from pokebase import interface
 """
 
 
-def getInfo(poke_name) -> dict:
+def getInfo(poke_name) -> dict or None:
     poke_id = interface._convert_name_to_id('pokemon', poke_name)
+    if poke_id == None:
+        return None
     poke_type = {'bug': 1, 'dark': 1, 'dragon': 1, 'electric': 1, 'fairy': 1, 'fighting': 1, 'fire': 1, 'flying': 1,
                  'ghost': 1, 'grass': 1, 'ground': 1, 'ice': 1, 'normal': 1, 'poison': 1, 'psychic': 1, 'rock': 1, 'steel': 1, 'water': 1}
     poke = pb.api.get_data(
@@ -44,6 +46,9 @@ def main(poke_name):
     DARK_GRAY_BUTTON_COLOR = '#e0e0e0 on #212021'
 
     POKEMON_TYPE_FROM = getInfo(poke_name)
+    if POKEMON_TYPE_FROM == None:
+        poke_name = 'charmander'
+        POKEMON_TYPE_FROM = getInfo(poke_name)
 
     POKEMON_TYPE_SORTED = dict(
         sorted(POKEMON_TYPE_FROM.items(), key=lambda x: -x[1]))
@@ -117,7 +122,8 @@ def main(poke_name):
                         sg.B(image_data=T_OFF, k='-TOGGLE3-', metadata=False,
                              button_color=sg.theme_background_color()),
                         sg.B(image_data=T_OFF, k='-TOGGLE4-', button_color=sg.theme_background_color(), metadata=True)],
-                       [sg.Text(text='Alolan')],
+                       [sg.Text(text='Alolan', font=('Helvetica', 17), justification='center'), sg.Text(text='Paldean', font=('Helvetica', 17), justification='center'), sg.Text(
+                           text='Galarian', font=('Helvetica', 17), justification='center'), sg.Text(text='Hisuian', font=('Helvetica', 17), justification='center')],
                        [sg.B('Do Something', size=(14, 2), button_color=BLUE_BUTTON_COLOR),
                         sg.B('Upgrade', size=(14, 2),
                              button_color=GREEN_BUTTON_COLOR),
@@ -137,15 +143,23 @@ def main(poke_name):
             window[event].update(image_data=T_ON if state else T_OFF)
         if event == '-TOGGLE1-':
             window.close()
+            if '-' in poke_name:
+                poke_name = poke_name.split("-", 1)[0]
             main(poke_name + '-alola')
         elif event == '-TOGGLE2-':
             window.close()
+            if '-' in poke_name:
+                poke_name = poke_name.split("-", 1)[0]
             main(poke_name + '-paldea')
         elif event == '-TOGGLE3-':
             window.close()
+            if '-' in poke_name:
+                poke_name = poke_name.split("-", 1)[0]
             main(poke_name + '-galar')
         elif event == '-TOGGLE4-':
             window.close()
+            if '-' in poke_name:
+                poke_name = poke_name.split("-", 1)[0]
             main(poke_name + '-hisui')
         elif event == 'Do Something':
             window.close()

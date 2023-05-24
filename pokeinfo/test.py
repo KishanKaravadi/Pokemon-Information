@@ -29,4 +29,7 @@ def getInfo(poke_name) -> dict:
     return poke_type
 
 
-print(getInfo('alola-diglett'))
+print(getInfo('diglett-alola'))
+poke_name = 'hi'
+poke_id = interface._convert_name_to_id('pokemon', poke_name)
+print(poke_id)
