@@ -76,7 +76,8 @@ def main(poke_name):
                        [sg.B('Light', size=(10, 2), button_color=LIGHT_GRAY_BUTTON_COLOR), sg.B(
                            'Dark', size=(10, 2), button_color=DARK_GRAY_BUTTON_COLOR)],
                        [sg.T()],
-                       [sg.Input(key='-POKENAME-', size=(40, 30))],
+                       [sg.Input(key='-POKENAME-',
+                                 background_color='grey', text_color='black', font=('Helvetica', 19), focus=True, size=(40, 100))],
 
                        [sg.Image(data=pb.SpriteResource(
                            'pokemon', interface._convert_name_to_id('pokemon', poke_name)).img_data)],
@@ -111,8 +112,12 @@ def main(poke_name):
                         for name in IMMUNITY],
 
                        [sg.B(image_data=T_OFF, k='-TOGGLE1-', metadata=False, button_color=sg.theme_background_color()),
-                        sg.B(image_data=T_ON, k='-TOGGLE2-', button_color=sg.theme_background_color(), metadata=True)],
-                       [sg.T()],
+                        sg.B(image_data=T_OFF, k='-TOGGLE2-',
+                             button_color=sg.theme_background_color(), metadata=True),
+                        sg.B(image_data=T_OFF, k='-TOGGLE3-', metadata=False,
+                             button_color=sg.theme_background_color()),
+                        sg.B(image_data=T_OFF, k='-TOGGLE4-', button_color=sg.theme_background_color(), metadata=True)],
+                       [sg.Text(text='Alolan')],
                        [sg.B('Do Something', size=(14, 2), button_color=BLUE_BUTTON_COLOR),
                         sg.B('Upgrade', size=(14, 2),
                              button_color=GREEN_BUTTON_COLOR),
@@ -120,7 +125,8 @@ def main(poke_name):
                        [sg.Image(data=BLANK, k='-GIF-', metadata=0)],
                        [sg.T('The end of "my App"')]], element_justification='c', k='-TOP COL-')]]
 
-    window = sg.Window('PokeInfo', layout=layout, location=(-7, 0))
+    window = sg.Window('PokeInfo', layout=layout,
+                       location=(-7, 0))
 
     while True:             # Event Loop
         event, values = window.read(timeout=100)
@@ -129,6 +135,18 @@ def main(poke_name):
         if event.startswith('-TOGGLE'):
             state = window[event].metadata = not window[event].metadata
             window[event].update(image_data=T_ON if state else T_OFF)
+        if event == '-TOGGLE1-':
+            window.close()
+            main(poke_name + '-alola')
+        elif event == '-TOGGLE2-':
+            window.close()
+            main(poke_name + '-paldea')
+        elif event == '-TOGGLE3-':
+            window.close()
+            main(poke_name + '-galar')
+        elif event == '-TOGGLE4-':
+            window.close()
+            main(poke_name + '-hisui')
         elif event == 'Do Something':
             window.close()
         elif event == 'Upgrade':

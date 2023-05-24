@@ -6,8 +6,6 @@ from pokebase import interface
 
 cache.set_cache('testing')
 
-# print(pb.api.get_data('pokemon', resource_id='charmander', force_lookup=True))
-
 
 def getInfo(poke_name) -> dict:
     poke_id = interface._convert_name_to_id('pokemon', poke_name)
@@ -31,4 +29,4 @@ def getInfo(poke_name) -> dict:
     return poke_type
 
 
-print(getInfo('charmander'))
+print(getInfo('alola-diglett'))
