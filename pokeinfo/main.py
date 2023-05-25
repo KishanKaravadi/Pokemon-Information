@@ -1,6 +1,14 @@
 import PySimpleGUI as sg
 import pokebase as pb
 from pokebase import interface
+import pytesseract
+import pyautogui
+import re
+import numpy as np
+from PIL import Image
+import pygetwindow as gw
+
+pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 
 """
     Demo - A simple minimal window with a material design feel
@@ -13,8 +21,39 @@ from pokebase import interface
     Copyright 2021 PySimpleGUI
 """
 
+ryujinx = gw.getWindowsWithTitle("Ryujinx ")[0]
+left = ryujinx.left+((ryujinx.width*983)/1296)
+top = ryujinx.top+((ryujinx.height*84)/804)
+width = 209
+height = 34
 
-def getInfo(poke_name) -> dict or None:
+
+def get_name_from_top() -> str:
+    pokemon_image = pyautogui.screenshot(
+        region=(left, top, width, height))
+    pokemon_image.save('og.png')
+    processed_image = keep_colors_close_to_black(pokemon_image)
+    pokemon_name = pytesseract.image_to_string(processed_image)
+    print(pokemon_name)
+    true_pokemon_name = re.sub(r"[^a-zA-Z0-9 -]", "", pokemon_name)
+    return true_pokemon_name
+
+
+def keep_colors_close_to_black(image, threshold=71) -> Image:
+    # Load the image using PIL
+    # Convert the image to grayscale
+    grayscale_image = image.convert("L")
+
+    # Apply threshold to filter out non-black colors
+    filtered_image = grayscale_image.point(lambda p: p < threshold and 255)
+
+    # Convert the filtered image back to RGB
+    filtered_image_rgb = filtered_image.convert("RGB")
+    # Display or save the filtered image
+    return filtered_image_rgb
+
+
+def get_info(poke_name) -> dict or None:
     poke_id = interface._convert_name_to_id('pokemon', poke_name)
     if poke_id == None:
         return None
@@ -45,10 +84,10 @@ def main(poke_name):
     LIGHT_GRAY_BUTTON_COLOR = f'#212021 on #e0e0e0'
     DARK_GRAY_BUTTON_COLOR = '#e0e0e0 on #212021'
 
-    POKEMON_TYPE_FROM = getInfo(poke_name)
+    POKEMON_TYPE_FROM = get_info(poke_name)
     if POKEMON_TYPE_FROM == None:
         poke_name = 'charmander'
-        POKEMON_TYPE_FROM = getInfo(poke_name)
+        POKEMON_TYPE_FROM = get_info(poke_name)
 
     POKEMON_TYPE_SORTED = dict(
         sorted(POKEMON_TYPE_FROM.items(), key=lambda x: -x[1]))
@@ -81,8 +120,6 @@ def main(poke_name):
                        [sg.B('Light', size=(10, 2), button_color=LIGHT_GRAY_BUTTON_COLOR), sg.B(
                            'Dark', size=(10, 2), button_color=DARK_GRAY_BUTTON_COLOR)],
                        [sg.T()],
-                       [sg.Input(key='-POKENAME-',
-                                 background_color='grey', text_color='black', font=('Helvetica', 19), focus=True, size=(40, 100))],
 
                        [sg.Image(data=pb.SpriteResource(
                            'pokemon', interface._convert_name_to_id('pokemon', poke_name)).img_data)],
@@ -124,8 +161,10 @@ def main(poke_name):
                         sg.B(image_data=T_OFF, k='-TOGGLE4-', button_color=sg.theme_background_color(), metadata=True)],
                        [sg.Text(text='Alolan', font=('Helvetica', 17), justification='center'), sg.Text(text='Paldean', font=('Helvetica', 17), justification='center'), sg.Text(
                            text='Galarian', font=('Helvetica', 17), justification='center'), sg.Text(text='Hisuian', font=('Helvetica', 17), justification='center')],
-                       [sg.B('Do Something', size=(14, 2), button_color=BLUE_BUTTON_COLOR),
-                        sg.B('Upgrade', size=(14, 2),
+                       [sg.Input(key='-POKENAME-',
+                                 background_color='grey', text_color='black', expand_x=False, font=('Helvetica', 19), focus=True, justification='center', size=(40, 50))],
+                       [sg.B('Wild Pokemon', size=(14, 2), button_color=BLUE_BUTTON_COLOR),
+                        sg.B('Override', size=(14, 2),
                              button_color=GREEN_BUTTON_COLOR),
                         sg.B('Exit', size=(14, 2), button_color=LIGHT_GRAY_BUTTON_COLOR)],
                        [sg.Image(data=BLANK, k='-GIF-', metadata=0)],
@@ -161,12 +200,12 @@ def main(poke_name):
             if '-' in poke_name:
                 poke_name = poke_name.split("-", 1)[0]
             main(poke_name + '-hisui')
-        elif event == 'Do Something':
+        elif event == 'Wild Pokemon':
             window.close()
-        elif event == 'Upgrade':
+            wild_pokemon = get_name_from_top()
+            main(wild_pokemon.lower())
+        elif event == 'Override':
             window.close()
-            # window = sg.Window('Window Title', layout=getLayout(
-            #     values['-POKENAME-']), location=(-7, 0))
             main(values['-POKENAME-'])
 
     window.close()

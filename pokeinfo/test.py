@@ -3,11 +3,17 @@ import pokebase as pb
 
 from pokebase import cache
 from pokebase import interface
+import pyautogui
+import pytesseract
+import re
+import numpy as np
+from PIL import Image
+import pygetwindow as gw
 
 cache.set_cache('testing')
 
 
-def getInfo(poke_name) -> dict:
+def get_info(poke_name) -> dict:
     poke_id = interface._convert_name_to_id('pokemon', poke_name)
     poke_type = {'bug': 1, 'dark': 1, 'dragon': 1, 'electric': 1, 'fairy': 1, 'fighting': 1, 'fire': 1, 'flying': 1,
                  'ghost': 1, 'grass': 1, 'ground': 1, 'ice': 1, 'normal': 1, 'poison': 1, 'psychic': 1, 'rock': 1, 'steel': 1, 'water': 1}
@@ -29,7 +35,43 @@ def getInfo(poke_name) -> dict:
     return poke_type
 
 
-print(getInfo('diglett-alola'))
-poke_name = 'hi'
-poke_id = interface._convert_name_to_id('pokemon', poke_name)
-print(poke_id)
+TOP_LEFT = (2251, 85)
+BOTTOM_RIGHT = (2460, 119)
+
+male = [11, 68, 240]
+female = [238, 15, 7]
+
+hi = gw.getWindowsWithTitle("Ryujinx ")[0]
+print(hi)
+left = hi.left+((hi.width*983)/1296)
+top = hi.top+((hi.height*84)/804)
+width = 209
+height = 34
+
+
+def get_name_from_top() -> str:
+    pokemon_image = pyautogui.screenshot(
+        region=(left, top, width, height))
+    pokemon_image.save('hi.png')
+    processed_image = keep_colors_close_to_black(pokemon_image)
+    pokemon_name = pytesseract.image_to_string(processed_image)
+    true_pokemon_name = re.sub(r"[^a-zA-Z0-9 -]", "", pokemon_name)
+    return true_pokemon_name
+
+
+def keep_colors_close_to_black(image, threshold=71) -> Image:
+    # Load the image using PIL
+    # Convert the image to grayscale
+    grayscale_image = image.convert("L")
+
+    # Apply threshold to filter out non-black colors
+    filtered_image = grayscale_image.point(lambda p: p < threshold and 255)
+
+    # Convert the filtered image back to RGB
+    filtered_image_rgb = filtered_image.convert("RGB")
+    # Display or save the filtered image
+    return filtered_image_rgb
+
+
+hi = get_name_from_top()
+print(hi)
