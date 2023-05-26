@@ -7,7 +7,7 @@ import pyautogui
 import pytesseract
 import re
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 import pygetwindow as gw
 
 cache.set_cache('testing')
@@ -43,10 +43,10 @@ female = [238, 15, 7]
 
 hi = gw.getWindowsWithTitle("Ryujinx ")[0]
 print(hi)
-left = hi.left+((hi.width*983)/1296)
-top = hi.top+((hi.height*84)/804)
+left = hi.left+(hi.width*(983/1296))
+top = hi.top+(hi.height*(78/804))
 width = 209
-height = 34
+height = 34*(hi.height/804)
 
 
 def get_name_from_top() -> str:
@@ -54,6 +54,7 @@ def get_name_from_top() -> str:
         region=(left, top, width, height))
     pokemon_image.save('hi.png')
     processed_image = keep_colors_close_to_black(pokemon_image)
+    processed_image.save('bye.png')
     pokemon_name = pytesseract.image_to_string(processed_image)
     true_pokemon_name = re.sub(r"[^a-zA-Z0-9 -]", "", pokemon_name)
     return true_pokemon_name
@@ -69,8 +70,14 @@ def keep_colors_close_to_black(image, threshold=71) -> Image:
 
     # Convert the filtered image back to RGB
     filtered_image_rgb = filtered_image.convert("RGB")
+
+    inverted_image = Image.eval(filtered_image_rgb, lambda p: 255 - p)
+
+    dilated_image = inverted_image.filter(
+        ImageFilter.MinFilter(1))
     # Display or save the filtered image
-    return filtered_image_rgb
+    dilated_image.save('dilate.png')
+    return dilated_image
 
 
 hi = get_name_from_top()

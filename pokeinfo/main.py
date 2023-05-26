@@ -5,7 +5,7 @@ import pytesseract
 import pyautogui
 import re
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 import pygetwindow as gw
 
 pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
@@ -21,20 +21,13 @@ pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
     Copyright 2021 PySimpleGUI
 """
 
-ryujinx = gw.getWindowsWithTitle("Ryujinx ")[0]
-left = ryujinx.left+((ryujinx.width*983)/1296)
-top = ryujinx.top+((ryujinx.height*84)/804)
-width = 209
-height = 34
 
+def get_name_from_top(loc) -> str:
 
-def get_name_from_top() -> str:
     pokemon_image = pyautogui.screenshot(
-        region=(left, top, width, height))
-    pokemon_image.save('og.png')
+        region=loc)
     processed_image = keep_colors_close_to_black(pokemon_image)
     pokemon_name = pytesseract.image_to_string(processed_image)
-    print(pokemon_name)
     true_pokemon_name = re.sub(r"[^a-zA-Z0-9 -]", "", pokemon_name)
     return true_pokemon_name
 
@@ -49,8 +42,14 @@ def keep_colors_close_to_black(image, threshold=71) -> Image:
 
     # Convert the filtered image back to RGB
     filtered_image_rgb = filtered_image.convert("RGB")
+
+    inverted_image = Image.eval(filtered_image_rgb, lambda p: 255 - p)
+
+    dilated_image = inverted_image.filter(
+        ImageFilter.MinFilter(1))
     # Display or save the filtered image
-    return filtered_image_rgb
+    dilated_image.save('dilate.png')
+    return dilated_image
 
 
 def get_info(poke_name) -> dict or None:
@@ -75,6 +74,18 @@ def get_info(poke_name) -> dict or None:
             for obj in types['damage_relations'][category]:
                 poke_type[obj['name']] *= 0
     return poke_type
+
+
+def getTypes(poke_name):
+    pokemon_types = []
+    poke_id = interface._convert_name_to_id('pokemon', poke_name)
+    if poke_id == None:
+        return None
+    poke = pb.api.get_data(
+        'pokemon', resource_id=poke_id, force_lookup=True)
+    for type in poke['types']:
+        pokemon_types.append(type['type']['name'])
+    return pokemon_types
 
 
 def main(poke_name):
@@ -114,11 +125,17 @@ def main(poke_name):
     IMMUNITY = [key for key, value in POKEMON_TYPE_SORTED.items()
                 if value == 0]
 
+    pokemon_types = getTypes(poke_name)
+    if pokemon_types == None:
+        getTypes('charmander')
+
+    print(pokemon_types)
+
     layout = [[sg.Col([[sg.T('Welcome to my App')],
                        [sg.T('Your license status: '), sg.T(
                            'Trial', k='-LIC STATUS-')],
-                       [sg.B('Light', size=(10, 2), button_color=LIGHT_GRAY_BUTTON_COLOR), sg.B(
-                           'Dark', size=(10, 2), button_color=DARK_GRAY_BUTTON_COLOR)],
+                       [sg.Image(filename='assets/'+poke_type+'.png', subsample=3)
+                           for poke_type in pokemon_types],
                        [sg.T()],
 
                        [sg.Image(data=pb.SpriteResource(
@@ -166,7 +183,7 @@ def main(poke_name):
                        [sg.B('Wild Pokemon', size=(14, 2), button_color=BLUE_BUTTON_COLOR),
                         sg.B('Override', size=(14, 2),
                              button_color=GREEN_BUTTON_COLOR),
-                        sg.B('Exit', size=(14, 2), button_color=LIGHT_GRAY_BUTTON_COLOR)],
+                        sg.B('Exit', size=(14, 2), button_color=BLUE_BUTTON_COLOR)],
                        [sg.Image(data=BLANK, k='-GIF-', metadata=0)],
                        [sg.T('The end of "my App"')]], element_justification='c', k='-TOP COL-')]]
 
@@ -175,7 +192,7 @@ def main(poke_name):
 
     while True:             # Event Loop
         event, values = window.read(timeout=100)
-        if event == sg.WIN_CLOSED or event == 'Exit':
+        if event == sg.WIN_CLOSED:
             break
         if event.startswith('-TOGGLE'):
             state = window[event].metadata = not window[event].metadata
@@ -201,8 +218,22 @@ def main(poke_name):
                 poke_name = poke_name.split("-", 1)[0]
             main(poke_name + '-hisui')
         elif event == 'Wild Pokemon':
+            ryujinx = gw.getWindowsWithTitle("Ryujinx ")[0]
+            left = ryujinx.left+((ryujinx.width*983)/1296)
+            top = ryujinx.top+((ryujinx.height*84)/804)
+            width = 209
+            height = 34
             window.close()
-            wild_pokemon = get_name_from_top()
+            wild_pokemon = get_name_from_top((left, top, width, height))
+            main(wild_pokemon.lower())
+        elif event == 'Exit':
+            ryujinx = gw.getWindowsWithTitle("Ryujinx ")[0]
+            left = ryujinx.left+((ryujinx.width*983)/1296)
+            top = ryujinx.top+((ryujinx.height*84)/804)
+            width = 209
+            height = 34
+            window.close()
+            wild_pokemon = get_name_from_top((left, top, width, height))
             main(wild_pokemon.lower())
         elif event == 'Override':
             window.close()
